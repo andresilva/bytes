@@ -7,6 +7,7 @@ trait Bytes {
   def size: Int
 
   def readByte(offset: Int): Byte
+  def readShort(offset: Int): Short
   def readChar(offset: Int): Char
   def readInt(offset: Int): Int
   def readFloat(offset: Int): Float
@@ -14,6 +15,7 @@ trait Bytes {
   def readDouble(offset: Int): Double
 
   def writeByte(offset: Int, value: Byte): Unit
+  def writeShort(offset: Int, value: Short): Unit
   def writeChar(offset: Int, value: Char): Unit
   def writeInt(offset: Int, value: Int): Unit
   def writeFloat(offset: Int, value: Float): Unit
@@ -26,6 +28,7 @@ trait ByteBufferBytes extends Bytes {
   def size = bb.limit()
 
   def readByte(offset: Int) = bb.get(offset)
+  def readShort(offset: Int) = bb.getShort(offset)
   def readChar(offset: Int) = bb.getChar(offset)
   def readInt(offset: Int) = bb.getInt(offset)
   def readFloat(offset: Int) = bb.getFloat(offset)
@@ -33,6 +36,7 @@ trait ByteBufferBytes extends Bytes {
   def readDouble(offset: Int) = bb.getDouble(offset)
 
   def writeByte(offset: Int, value: Byte) = bb.put(offset, value)
+  def writeShort(offset: Int, value: Short) = bb.putShort(offset, value)
   def writeChar(offset: Int, value: Char) = bb.putChar(offset, value)
   def writeInt(offset: Int, value: Int) = bb.putInt(offset, value)
   def writeFloat(offset: Int, value: Float) = bb.putFloat(offset, value)
@@ -65,6 +69,7 @@ final class UnsafeBytes(
     extends Bytes {
 
   def readByte(offset: Int) = UnsafeBytes.unsafe.getByte(baseAddr + offset)
+  def readShort(offset: Int) = UnsafeBytes.unsafe.getShort(baseAddr + offset)
   def readChar(offset: Int) = UnsafeBytes.unsafe.getChar(baseAddr + offset)
   def readInt(offset: Int) = UnsafeBytes.unsafe.getInt(baseAddr + offset)
   def readFloat(offset: Int) = UnsafeBytes.unsafe.getFloat(baseAddr + offset)
@@ -72,6 +77,7 @@ final class UnsafeBytes(
   def readDouble(offset: Int) = UnsafeBytes.unsafe.getDouble(baseAddr + offset)
 
   def writeByte(offset: Int, value: Byte) = UnsafeBytes.unsafe.putByte(baseAddr + offset, value)
+  def writeShort(offset: Int, value: Short) = UnsafeBytes.unsafe.putShort(baseAddr + offset, value)
   def writeChar(offset: Int, value: Char) = UnsafeBytes.unsafe.putChar(baseAddr + offset, value)
   def writeInt(offset: Int, value: Int) = UnsafeBytes.unsafe.putInt(baseAddr + offset, value)
   def writeFloat(offset: Int, value: Float) = UnsafeBytes.unsafe.putFloat(baseAddr + offset, value)
