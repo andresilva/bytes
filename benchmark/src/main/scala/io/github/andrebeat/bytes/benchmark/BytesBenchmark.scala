@@ -4,7 +4,7 @@ import com.google.caliper.{Param, SimpleBenchmark}
 import io.github.andrebeat.bytes._
 import scala.util.Random
 
-class Benchmark extends SimpleBenchmark {
+class BytesBenchmark extends SimpleBenchmark {
   @Param(Array("256", "512", "1024", "2048", "4096"))
   val size: Int = 0
 
