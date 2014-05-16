@@ -1,10 +1,17 @@
 package io.github.andrebeat.bytes
 
+import shapeless.{Generic, HList, HNil, ::}
+
 trait Write[A] {
   def apply(bytes: Bytes, offset: Int, value: A): Int
+  protected def apply(bytes: Bytes, offset: Int, totalSize: Int, value: A): Int =
+    apply(bytes, offset, value)
 }
 
 object Write {
+  def apply[A: Write](bytes: Bytes, offset: Int, value: A): Int =
+    implicitly[Write[A]].apply(bytes, offset, value)
+
   implicit object ByteWrite extends Write[Byte] {
     def apply(bytes: Bytes, offset: Int, value: Byte): Int = {
       bytes.writeByte(offset, value)
@@ -52,5 +59,22 @@ object Write {
       bytes.writeDouble(offset, value)
       8
     }
+  }
+
+  implicit def hlistWrite[H, T <: HList](implicit write: Write[H], tailWrite: Write[T]) =
+    new Write[H :: T] {
+      def apply(bytes: Bytes, offset: Int, value: H :: T) = {
+        val size = write(bytes, offset, value.head)
+        tailWrite(bytes, offset + size, size, value.tail)
+      }
+      override def apply(bytes: Bytes, offset: Int, totalSize: Int, value: H :: T) = {
+        val size = write(bytes, offset, value.head)
+        tailWrite(bytes, offset + size, totalSize + size, value.tail)
+      }
+    }
+
+  implicit object HNilWrite extends Write[HNil] {
+    def apply(bytes: Bytes, offset: Int, value: HNil) = 0
+    override def apply(bytes: Bytes, offset: Int, totalSize: Int, value: HNil) = totalSize
   }
 }

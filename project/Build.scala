@@ -10,7 +10,9 @@ object MyBuild extends Build {
     licenses := Seq("MIT License" -> url("https://raw.githubusercontent.com/andrebeat/bytes/master/LICENSE")),
 
     scalaVersion := "2.11.0",
-    version := "0.1")
+    version := "0.1",
+
+    fork := true)
 
   lazy val root = Project("root", file("."))
     .aggregate(core, benchmark)
@@ -18,6 +20,10 @@ object MyBuild extends Build {
 
   lazy val core = Project("core", file("core"))
     .settings(basicSettings: _*)
+    .settings(
+      libraryDependencies ++= Seq(
+        "com.chuusai" %% "shapeless" % "2.0.0"
+      ))
 
   lazy val benchmark = Project("benchmark", file("benchmark"))
     .dependsOn(core)
