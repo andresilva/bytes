@@ -50,4 +50,12 @@ object Read {
   implicit object HNilRead extends Read[HNil] {
     def apply(bytes: Bytes, offset: Int) = (HNil, 0)
   }
+
+  implicit def productRead[P <: Product, L <: HList](implicit gen: Generic.Aux[P, L], read: Read[L]) =
+    new Read[P] {
+      def apply(bytes: Bytes, offset: Int) = {
+        val (hl, size) = read(bytes, offset)
+        (gen.from(hl), size)
+      }
+    }
 }

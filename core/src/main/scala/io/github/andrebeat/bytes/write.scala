@@ -77,4 +77,9 @@ object Write {
     def apply(bytes: Bytes, offset: Int, value: HNil) = 0
     override def apply(bytes: Bytes, offset: Int, totalSize: Int, value: HNil) = totalSize
   }
+
+  implicit def productWrite[P <: Product, L <: HList](implicit gen: Generic.Aux[P, L], write: Write[L]) =
+    new Write[P] {
+      def apply(bytes: Bytes, offset: Int, value: P) = write(bytes, offset, gen.to(value))
+    }
 }
