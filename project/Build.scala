@@ -31,7 +31,10 @@ object MyBuild extends Build {
     .settings(
       libraryDependencies ++= Seq(
         "com.google.code.java-allocation-instrumenter" % "java-allocation-instrumenter" % "2.0",
-        "com.google.code.gson"                         % "gson"                         % "1.7.1"
+        "com.google.code.gson"                         % "gson"                         % "1.7.1",
+
+        "com.esotericsoftware.kryo"                    % "kryo"                         % "2.24.0",
+        "org.objenesis"                                % "objenesis"                    % "2.1"
       ),
       fork in run := true,
       // we need to add the runtime classpath as a "-cp" argument to the `javaOptions in run`, otherwise caliper
