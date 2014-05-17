@@ -2,7 +2,7 @@ package io.github.andrebeat.bytes
 
 import shapeless.{Generic, HList, HNil, ::}
 
-trait Write[A] {
+trait Write[-A] {
   def apply(bytes: Bytes, offset: Int, value: A): Int
   protected def apply(bytes: Bytes, offset: Int, totalSize: Int, value: A): Int =
     apply(bytes, offset, value)
