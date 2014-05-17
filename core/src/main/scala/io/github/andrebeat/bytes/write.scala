@@ -4,8 +4,6 @@ import shapeless.{Generic, HList, HNil, ::}
 
 trait Write[-A] {
   def apply(bytes: Bytes, offset: Int, value: A): Int
-  protected def apply(bytes: Bytes, offset: Int, totalSize: Int, value: A): Int =
-    apply(bytes, offset, value)
 }
 
 object Write {
@@ -61,21 +59,25 @@ object Write {
     }
   }
 
-  implicit def hlistWrite[H, T <: HList](implicit write: Write[H], tailWrite: Write[T]) =
-    new Write[H :: T] {
+  trait HListWrite[H <: HList] extends Write[H] {
+    def apply(bytes: Bytes, offset: Int, totalSize: Int, value: H): Int
+  }
+
+  implicit def hlistWrite[H, T <: HList](implicit write: Write[H], tailWrite: HListWrite[T]) =
+    new HListWrite[H :: T] {
       def apply(bytes: Bytes, offset: Int, value: H :: T) = {
         val size = write(bytes, offset, value.head)
         tailWrite(bytes, offset + size, size, value.tail)
       }
-      override def apply(bytes: Bytes, offset: Int, totalSize: Int, value: H :: T) = {
+      def apply(bytes: Bytes, offset: Int, totalSize: Int, value: H :: T) = {
         val size = write(bytes, offset, value.head)
         tailWrite(bytes, offset + size, totalSize + size, value.tail)
       }
     }
 
-  implicit object HNilWrite extends Write[HNil] {
+  implicit object HNilWrite extends HListWrite[HNil] {
     def apply(bytes: Bytes, offset: Int, value: HNil) = 0
-    override def apply(bytes: Bytes, offset: Int, totalSize: Int, value: HNil) = totalSize
+    def apply(bytes: Bytes, offset: Int, totalSize: Int, value: HNil) = totalSize
   }
 
   implicit def productWrite[P <: Product, L <: HList](implicit gen: Generic.Aux[P, L], write: Write[L]) =
