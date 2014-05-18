@@ -45,7 +45,7 @@ object Read {
         val (tail, tailSize) = tailRead(bytes, offset + size)
         (value :: tail, size + tailSize)
       }
-  }
+    }
 
   implicit object HNilRead extends Read[HNil] {
     def apply(bytes: Bytes, offset: Int) = (HNil, 0)
@@ -56,6 +56,17 @@ object Read {
       def apply(bytes: Bytes, offset: Int) = {
         val (hl, size) = read(bytes, offset)
         (gen.from(hl), size)
+      }
+    }
+
+  implicit def traversableRead[A](implicit read: Read[A]) =
+    new Read[Traversable[A]] {
+      def apply(bytes: Bytes, offset: Int) = {
+        val length = bytes.readShort(offset)
+        (0 until length).foldLeft((Vector[A](), 2)) { case ((acc, off), _) =>
+          val (value, size) = read(bytes, offset + off)
+          (acc :+ value, size + off)
+        }
       }
     }
 }

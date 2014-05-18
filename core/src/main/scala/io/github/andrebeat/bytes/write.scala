@@ -1,5 +1,6 @@
 package io.github.andrebeat.bytes
 
+import scala.annotation.tailrec
 import shapeless.{Generic, HList, HNil, ::}
 
 trait Write[-A] {
@@ -83,5 +84,27 @@ object Write {
   implicit def productWrite[P <: Product, L <: HList](implicit gen: Generic.Aux[P, L], write: Write[L]) =
     new Write[P] {
       def apply(bytes: Bytes, offset: Int, value: P) = write(bytes, offset, gen.to(value))
+    }
+
+  implicit def traversableWrite[A](implicit write: Write[A]) =
+    new Write[Traversable[A]] {
+      private[this] val HEADER_SIZE = 2 // Short
+
+      def apply(bytes: Bytes, offset: Int, value: Traversable[A]): Int = {
+        if (value.isEmpty) { bytes.writeShort(offset, 0); HEADER_SIZE }
+        else {
+          val size = write(bytes, offset + HEADER_SIZE, value.head)
+          apply(bytes, offset, offset + size + HEADER_SIZE, 1, value.tail)
+        }
+      }
+
+      @tailrec
+      private[this] def apply(bytes: Bytes, initialOffset: Int, offset: Int, length: Int, value: Traversable[A]): Int = {
+        if (value.isEmpty) { bytes.writeShort(initialOffset, length.toShort); offset - initialOffset }
+        else {
+          val size = write(bytes, offset, value.head)
+          apply(bytes, initialOffset, offset + size, length + 1, value.tail)
+        }
+      }
     }
 }
