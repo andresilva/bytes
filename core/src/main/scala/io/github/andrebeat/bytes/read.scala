@@ -1,12 +1,28 @@
 package io.github.andrebeat.bytes
 
+import scala.collection.generic.CanBuildFrom
 import shapeless.{Generic, HList, HNil, ::}
 
 trait Read[A] {
   def apply(bytes: Bytes, offset: Int): (A, Int)
 }
 
-object Read {
+trait LowPriorityReadImplicts {
+  implicit def mapCbfRead[A, B, M[A, B] <: Traversable[(A, B)]](implicit
+    read: Read[Traversable[(A, B)]],
+    cbf: CanBuildFrom[Nothing, (A, B), M[A, B]]) =
+    new Read[M[A, B]] {
+      def apply(bytes: Bytes, offset: Int) = {
+        val (traversable, size) = read(bytes, offset)
+        val builder = cbf()
+        builder.sizeHint(size)
+        builder ++= traversable
+        (builder.result, size)
+      }
+    }
+}
+
+object Read extends LowPriorityReadImplicts {
   def apply[A: Read](bytes: Bytes, offset: Int): (A, Int) =
     implicitly[Read[A]].apply(bytes, offset)
 
@@ -67,6 +83,19 @@ object Read {
           val (value, size) = read(bytes, offset + off)
           (acc :+ value, size + off)
         }
+      }
+    }
+
+  implicit def cbfRead[A, C[A] <: Traversable[A]](implicit
+    read: Read[Traversable[A]],
+    cbf: CanBuildFrom[Nothing, A, C[A]]) =
+    new Read[C[A]] {
+      def apply(bytes: Bytes, offset: Int) = {
+        val (traversable, size) = read(bytes, offset)
+        val builder = cbf()
+        builder.sizeHint(size)
+        builder ++= traversable
+        (builder.result, size)
       }
     }
 }
