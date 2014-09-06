@@ -60,6 +60,32 @@ object Write {
     }
   }
 
+  implicit def eitherWrite[A, B](implicit writea: Write[A], writeb: Write[B]) =
+    new Write[Either[A, B]] {
+      def apply(bytes: Bytes, offset: Int, value: Either[A, B]) =
+        value match {
+          case Left(a) =>
+            bytes.writeByte(offset, 0)
+            1 + writea(bytes, offset + 1, a)
+          case Right(b) =>
+            bytes.writeByte(offset, 1)
+            1 + writeb(bytes, offset + 1, b)
+        }
+    }
+
+  implicit def optionWrite[A](implicit write: Write[A]) =
+    new Write[Option[A]] {
+      def apply(bytes: Bytes, offset: Int, value: Option[A]) =
+        value match {
+          case None =>
+            bytes.writeByte(offset, 0)
+            1
+          case Some(a) =>
+            bytes.writeByte(offset, 1)
+            1 + write(bytes, offset + 1, a)
+        }
+    }
+
   trait HListWrite[H <: HList] extends Write[H] {
     def apply(bytes: Bytes, offset: Int, totalSize: Int, value: H): Int
   }

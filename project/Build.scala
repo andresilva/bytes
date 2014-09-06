@@ -9,7 +9,7 @@ object MyBuild extends Build {
     startYear := Some(2014),
     licenses := Seq("MIT License" -> url("https://raw.githubusercontent.com/andrebeat/bytes/master/LICENSE")),
 
-    scalaVersion := "2.11.0",
+    scalaVersion := "2.11.2",
     version := "0.1",
 
     fork := true)

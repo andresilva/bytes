@@ -54,6 +54,32 @@ object Read extends LowPriorityReadImplicts {
     def apply(bytes: Bytes, offset: Int) = (bytes.readDouble(offset), 8)
   }
 
+  implicit def eitherRead[A, B](implicit reada: Read[A], readb: Read[B]) =
+    new Read[Either[A, B]] {
+      def apply(bytes: Bytes, offset: Int) = {
+        bytes.readByte(offset) match {
+          case 0 =>
+            val (a, s) = reada(bytes, offset + 1)
+            (Left(a), s + 1)
+          case 1 =>
+            val (b, s) = readb(bytes, offset + 1)
+            (Right(b), s + 1)
+        }
+      }
+    }
+
+  implicit def optionRead[A](implicit read: Read[A]) =
+    new Read[Option[A]] {
+      def apply(bytes: Bytes, offset: Int) = {
+        bytes.readByte(offset) match {
+          case 0 => (None, 1)
+          case 1 =>
+            val (a, s) = read(bytes, offset + 1)
+            (Some(a), s + 1)
+        }
+      }
+    }
+
   implicit def hlistRead[H, T <: HList](implicit read: Read[H], tailRead: Read[T]) =
     new Read[H :: T] {
       def apply(bytes: Bytes, offset: Int) = {
